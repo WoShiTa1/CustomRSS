@@ -1,6 +1,8 @@
 name: Update RSS Feed
 
 on:
+  schedule:
+    - cron: '17 */6 * * *'
   workflow_dispatch: # Allows you to trigger it manually via the Actions tab
   push:
     branches: [main]
@@ -35,3 +37,27 @@ jobs:
             git commit -m 'Automated RSS Feed Update'
             git push
           fi
+
+      - name: Prepare GitHub Pages artifact
+        run: |
+          mkdir -p _site
+          cp feed.xml _site/
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
